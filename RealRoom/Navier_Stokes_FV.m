@@ -1,6 +1,9 @@
 clear
 close all
 
+%Path to store video plots
+path = 'C:\Users\fredd\OneDrive\Skrivbord\flowfilms';
+
 %
 g = 9.82;
 alpha = 3.43 * 10^-3; %Volumetric expansion coefficient
@@ -30,6 +33,8 @@ T_const = 1/(Re*Pr);
 %Hot and cold source position and temperature
 radiator_real = 20.1;
 window_real = 20;
+window_wall = 'north';
+radiator_wall = 'north';
 window_pos = [16,22];
 radiator_pos = [16,10];
 window_size = 10;
@@ -82,7 +87,7 @@ Vmag = 0;
 Wmag = 0;
 
 %Number of iterations
-timesteps = 10000;
+timesteps = 1000;
 %timediv determines how often a movie frame should be created
 timediv = 500;
 
@@ -115,10 +120,10 @@ for i = 1:timesteps
 %Set Boundary Conditions
 [Ubc,Vbc,Wbc] = Set_Room_BC(U,V,W); %Sets no-slip on all walls
 [Ubc,Vbc,Wbc] = Add_Dir_part(Ubc,Vbc,Wbc,Umag,Vmag,Wmag,in_pos,Size,in_wall);%inlet
-%[Ubc,Vbc,Wbc] = Add_Dir_part(Ubc,Vbc,Wbc,-Umag,Vmag,Wmag,out_pos,Size,out_wall);%standard outlet
+[Ubc,Vbc,Wbc] = Add_Dir_part(Ubc,Vbc,Wbc,-Umag,Vmag,Wmag,out_pos,Size,out_wall);%standard outlet
 
 %Experimenting with pressure condition
-[Ubc,Vbc,Wbc] = pressure_outlet_BC(Ubc,Vbc,Wbc,P,Vmag,Wmag,out_pos,Size,out_wall,dx,dy,dz, Re, dt);
+%[Ubc,Vbc,Wbc] = pressure_outlet_BC(Ubc,Vbc,Wbc,P,Vmag,Wmag,out_pos,Size,out_wall,dx,dy,dz, Re, dt);
 
 %Compute non-linear terms
 [nonlinU,nonlinV,nonlinW] = nonlinear(Ubc,Vbc,Wbc,dx,dy,dz);
@@ -139,10 +144,10 @@ Wstar = W + nonlinW.*dt + viscousW.*dt + F_buoyancy *dt - (1/Fr^2) *dt ;
 %divergence of the velocity field is computed in Poisson's equation
 [Ustarbc,Vstarbc,Wstarbc] = Set_Room_BC(Ustar,Vstar,Wstar);
 [Ustarbc,Vstarbc,Wstarbc] = Add_Dir_part(Ustarbc,Vstarbc,Wstarbc,Umag,Vmag,Wmag,in_pos,Size,in_wall);%inlet
-%[Ustarbc,Vstarbc,Wstarbc] = Add_Dir_part(Ustarbc,Vstarbc,Wstarbc,-Umag,Vmag,Wmag,out_pos,Size,out_wall);%standard outlet
+[Ustarbc,Vstarbc,Wstarbc] = Add_Dir_part(Ustarbc,Vstarbc,Wstarbc,-Umag,Vmag,Wmag,out_pos,Size,out_wall);%standard outlet
 
 %Experimenting
-[Ustarbc,Vstarbc,Wstarbc] = pressure_outlet_BC(Ustarbc,Vstarbc,Wstarbc,P,Vmag,Wmag,out_pos,Size,out_wall,dx,dy,dz, Re, dt);
+%[Ustarbc,Vstarbc,Wstarbc] = pressure_outlet_BC(Ustarbc,Vstarbc,Wstarbc,P,Vmag,Wmag,out_pos,Size,out_wall,dx,dy,dz, Re, dt);
 
 %Solve Poisson's equation for pressure
 P = Solve_Poisson(Ustarbc,Vstarbc,Wstarbc,dx,dy,dz,Nx,Ny,Nz,dt);
@@ -166,14 +171,14 @@ W = Wstar - dt*Pz;
 %advection-diffusion equation
 [Ubc,Vbc,Wbc] = Set_Room_BC(U,V,W);
 [Ubc,Vbc,Wbc] = Add_Dir_part(Ubc,Vbc,Wbc,Umag,Vmag,Wmag,in_pos,Size,in_wall);%inlet
-%[Ubc,Vbc,Wbc] = Add_Dir_part(Ubc,Vbc,Wbc,-Umag,Vmag,Wmag,out_pos,Size,out_wall);%standard outlet
+[Ubc,Vbc,Wbc] = Add_Dir_part(Ubc,Vbc,Wbc,-Umag,Vmag,Wmag,out_pos,Size,out_wall);%standard outlet
 
 %Experimenting
-[Ubc,Vbc,Wbc] = pressure_outlet_BC(Ubc,Vbc,Wbc,P,Vmag,Wmag,out_pos,Size,out_wall,dx,dy,dz, Re, dt);
+%[Ubc,Vbc,Wbc] = pressure_outlet_BC(Ubc,Vbc,Wbc,P,Vmag,Wmag,out_pos,Size,out_wall,dx,dy,dz, Re, dt);
 
 %Calculate spreading of scalars (Concentration and temperature)
 Xi = Concentration_propagation(Xi,Xi_const, Ubc,Vbc,Wbc, Q,dt,dx,dy,dz,out_pos,Size,out_wall, in_pos, Size, in_wall);
-T = Temperature_field(T, Ubc,Vbc,Wbc, T_const,windowTemp, radiatorTemp,window_pos, radiator_pos, window_size, dx,dy,dz,dt);
+T = Temperature_field(T, Ubc,Vbc,Wbc, T_const,windowTemp, radiatorTemp,window_pos, radiator_pos, window_size, dx,dy,dz,dt, window_wall, radiator_wall);
 
 %The main loop is done for the solution of the equations, the rest is just
 %for calculation of residuals and plotting.
@@ -239,15 +244,15 @@ end
 %Add frames to movie vectors
 %Need to transform back from dimensionless quantities in input
 if mod(i,timediv) == 0
-    StreamSliceMovie(Uplot*V0,Vplot*V0,Wplot*V0,Nx,Ny,Nz,time*L/V0);
+    StreamSliceMovie(Uplot*V0,Vplot*V0,Wplot*V0,Nx,Ny,Nz,time*L/V0, path);
 end
 
 if mod(i,timediv) == 0
-    ScalarMovie(Xi*Ximax,Nx,Ny,Nz,time*L/V0, Re, Sc, emission_rate)
+    ScalarMovie(Xi*Ximax,Nx,Ny,Nz,time*L/V0, Re, Sc, emission_rate, path)
 end
 
 if mod(i,timediv) == 0
-    TemperatureMovie(T.*(Tmax-Tmin)+Tmin,Nx,Ny,Nz,time*L/V0, Pr, Re, Ra)
+    TemperatureMovie(T.*(Tmax-Tmin)+Tmin,Nx,Ny,Nz,time*L/V0, Pr, Re, Ra, path)
 end
 
 %Sensor1 plot data
@@ -269,14 +274,14 @@ end
 time = time - dt;
 
 %Saving the movie
-myWriter = VideoWriter('C:\Users\fredd\OneDrive\Skrivbord\flowfilms\flowfield', 'MPEG-4');
+myWriter = VideoWriter([path '\flowfield'], 'MPEG-4');
 myWriter.FrameRate = 1;
 open(myWriter);
 writeVideo(myWriter,movieVector1);
 close(myWriter)
 
 %Pressure at final time
-PressureMovie(P,Nx,Ny,Nz,time*L/V0)
+PressureMovie(P,Nx,Ny,Nz,time*L/V0, path)
 
 %Sensor1 plot
 f10 = figure(10);
@@ -290,7 +295,7 @@ title(['Sensor data at ', '[' sprintf('%0.1f', sensor1x), ',' sprintf('%0.1f', s
 xlabel('Time [s]')
 ylabel('Temperature')
 legend('Sensor 1', 'Sensor 2')
-saveas(f10, "C:\Users\fredd\OneDrive\Skrivbord\flowfilms\Sensor_temps.png")
+saveas(f10, [path '\Sensor_temps.png'])
 
 %Sensor2 plot
 f11 = figure(11);
@@ -304,4 +309,4 @@ title(['Sensor data at ', '[' sprintf('%0.1f', sensor1x), ',' sprintf('%0.1f', s
 xlabel('Time [s]')
 ylabel('Concentration')
 legend('Sensor 1', 'Sensor 2')
-saveas(f11, "C:\Users\fredd\OneDrive\Skrivbord\flowfilms\Sensor_concentrations.png")
+saveas(f11, [path '\Sensor_concentrations.png'])
