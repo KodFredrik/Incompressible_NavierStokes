@@ -1,4 +1,4 @@
-function PressureMovie(P,Nx,Ny,Nz,time)
+function PressureMovie(P,Nx,Ny,Nz,time, path)
 [X,Y,Z] = meshgrid(1:Nx,1:Ny,1:Nz);
 pressureWriter = VideoWriter([path '\Pressure_' num2str(time,'%.2f')], 'MPEG-4');
 pressureWriter.FrameRate = 1;
