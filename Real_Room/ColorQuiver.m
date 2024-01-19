@@ -1,3 +1,4 @@
+%Not written by Fredrik
 function ColorQuiver(h)
 %// Compute the magnitude of the vectors
 mags = sqrt(sum(cat(2, h.UData(:), h.VData(:), ...
