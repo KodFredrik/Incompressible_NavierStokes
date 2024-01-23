@@ -30,18 +30,6 @@ Ra = Pr*(g*alpha*(Tmax-Tmin)*L^3/nu^2);
 Xi_const = 1/(Re*Sc);
 T_const = 1/(Re*Pr);
 
-
-%radiator_real = 20.1;
-%window_real = 20;
-%window_wall = 'north';
-%radiator_wall = 'north';
-%window_pos = [16,22];
-%radiator_pos = [16,10];
-%window_size = 10;
-
-
-
-
 %Number of cells N and step size in time and space
 Nx = 31;
 Ny = 31;
@@ -74,8 +62,8 @@ Q = zeros(Nx,Ny,Nz);
 emission_rate = 0.000167; %Amount of CO2/s from one person
 position1 = [16,16,16];
 position2 = [10,10,10];
-Q_1 = Apply_source(Q, emission_rate, position1, dt_real);
-Q_2 = Apply_source(Q, emission_rate, position2, dt_real);
+Q_1 = Apply_source(Q, emission_rate, position1);
+Q_2 = Apply_source(Q, emission_rate, position2);
 Q_real = Q_1 + Q_2;
 
 %This function transforms all the real quantities to dimensionless form.
