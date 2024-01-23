@@ -1,4 +1,4 @@
-function Q = Apply_source(Q, emission_rate, position, dt)
+function Q = Apply_source(Q, emission_rate, position)
 %Q is an array of the same size as Xi, but contains only a distribution of
 %an amount of concentration corresponding to the amount breathed out by a
 %person during an interval dt
